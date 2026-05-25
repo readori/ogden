@@ -23,6 +23,22 @@ if (duplicates.length) {
   errors.push(`Duplicate words: ${[...new Set(duplicates)].join(", ")}.`);
 }
 
+for (const word of words) {
+  if (!word.ex || !word.exz) {
+    errors.push(`${word.w}: missing bilingual example.`);
+  }
+  if (!Array.isArray(word.s) || !word.s.length) {
+    errors.push(`${word.w}: missing extension words.`);
+    continue;
+  }
+  for (const synonym of word.s) {
+    if (!synonym.w || !synonym.def || !synonym.vs || !synonym.use) {
+      errors.push(`${word.w}: extension word is missing w/def/vs/use.`);
+      break;
+    }
+  }
+}
+
 if (errors.length) {
   console.error(errors.join("\n"));
   process.exit(1);

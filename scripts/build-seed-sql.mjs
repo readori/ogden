@@ -4,7 +4,7 @@ import { CATEGORIES, buildFallbackWords } from "../src/catalog.js";
 
 const migrationsDir = resolve("migrations");
 const words = buildFallbackWords();
-const WORD_INSERT_CHUNK_SIZE = 20;
+const WORD_INSERT_CHUNK_SIZE = 5;
 
 function sql(value) {
   return `'${String(value ?? "").replaceAll("'", "''")}'`;

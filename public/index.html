@@ -33,10 +33,19 @@
         <button type="button" data-src="youdao-us">美音</button>
         <button type="button" data-src="local">本机</button>
       </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换深色模式">深色</button>
     </div>
   </nav>
 
   <main id="app" aria-live="polite">
+    <section class="book-panel" id="bookPanel">
+      <div class="book-copy">
+        <p class="book-kicker">Book basis</p>
+        <h2>Basic English: A General Introduction with Rules and Grammar</h2>
+        <p>C.K. Ogden · London: Paul Treber · 1930</p>
+      </div>
+      <div class="rule-strip" id="ruleStrip"></div>
+    </section>
     <div class="status" id="status">Loading 850 words...</div>
     <div id="sections"></div>
     <div class="empty" id="empty">没找到匹配的词。换个词试试?</div>

@@ -9,9 +9,15 @@ const CATEGORIES = [
 
 const TAGS = { op: "OP", gt: "GT", pt: "PT", qg: "QG", qo: "OPP" };
 const SPEAKER_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
+const savedTheme = localStorage.getItem("ogden-theme");
+const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+const initialTheme = savedTheme || (prefersDark ? "dark" : "light");
+document.documentElement.classList.toggle("dark", initialTheme === "dark");
 
 const state = {
   words: [],
+  rules: [],
+  theme: initialTheme,
   cat: "all",
   q: "",
   audioSource: "youdao-uk",
@@ -26,7 +32,9 @@ const els = {
   pills: document.getElementById("pills"),
   sections: document.getElementById("sections"),
   status: document.getElementById("status"),
-  empty: document.getElementById("empty")
+  empty: document.getElementById("empty"),
+  ruleStrip: document.getElementById("ruleStrip"),
+  themeToggle: document.getElementById("themeToggle")
 };
 
 function escapeHtml(value) {
@@ -46,6 +54,14 @@ function renderPills() {
   `).join("");
 }
 
+function renderTheme() {
+  document.documentElement.classList.toggle("dark", state.theme === "dark");
+  if (els.themeToggle) {
+    els.themeToggle.textContent = state.theme === "dark" ? "浅色" : "深色";
+    els.themeToggle.setAttribute("aria-label", state.theme === "dark" ? "切换浅色模式" : "切换深色模式");
+  }
+}
+
 function matches(word) {
   const inCat = state.cat === "all" || word.c === state.cat;
   if (!inCat) return false;
@@ -56,7 +72,9 @@ function matches(word) {
     word.en,
     word.ex,
     word.exz,
-    ...(word.s || [])
+    ...(word.s || []).flatMap((syn) => typeof syn === "string"
+      ? [syn]
+      : [syn.w, syn.def, syn.vs, syn.use])
   ].join(" ").toLowerCase();
   return haystack.includes(state.q);
 }
@@ -81,6 +99,17 @@ function renderSections() {
     .join("");
 }
 
+function renderRules() {
+  if (!els.ruleStrip || !state.rules.length) return;
+  els.ruleStrip.innerHTML = state.rules.slice(0, 10).map((rule) => `
+    <article class="rule-card">
+      <strong>${escapeHtml(rule.title)}</strong>
+      <p>${escapeHtml(rule.zh)}</p>
+      <em>${escapeHtml(rule.example)}</em>
+    </article>
+  `).join("");
+}
+
 function renderSection(cat, words) {
   return `
     <section class="section" id="sec-${cat.id}" data-cat="${cat.id}">
@@ -97,8 +126,13 @@ function renderSection(cat, words) {
 }
 
 function renderCard(word) {
-  const syns = (word.s || []).map((syn) => `
-    <button class="syn" type="button" data-syn="${escapeHtml(syn)}" data-main="${escapeHtml(word.w)}">${escapeHtml(syn)}</button>
+  const syns = normalizeSynonyms(word.s || []).map((syn) => `
+    <button class="syn" type="button"
+      data-syn="${escapeHtml(syn.w)}"
+      data-main="${escapeHtml(word.w)}"
+      data-def="${escapeHtml(syn.def)}"
+      data-vs="${escapeHtml(syn.vs)}"
+      data-use="${escapeHtml(syn.use)}">${escapeHtml(syn.w)}</button>
   `).join("");
   return `
     <article class="card ${state.learned.has(word.w) ? "learned" : ""}" data-cat="${word.c}" data-w="${escapeHtml(word.w)}">
@@ -128,6 +162,14 @@ async function loadWords() {
   const payload = await response.json();
   state.words = payload.words || [];
   renderSections();
+}
+
+async function loadMeta() {
+  const response = await fetch("/api/meta", { headers: { accept: "application/json" } });
+  if (!response.ok) return;
+  const payload = await response.json();
+  state.rules = payload.rules || [];
+  renderRules();
 }
 
 async function loadProgress() {
@@ -212,13 +254,34 @@ function speakLocal(text, rate, btn, clear) {
   speechSynthesis.speak(utterance);
 }
 
-function renderSynPanel(syn, main) {
+function normalizeSynonyms(items) {
+  return items.map((item) => {
+    if (typeof item === "string") {
+      return {
+        w: item,
+        def: `${item}: 扩展词`,
+        vs: `和主词相比，${item} 的用法边界需要结合具体句子判断。`,
+        use: "适合放在短句、替换句和同类词练习中。"
+      };
+    }
+    return {
+      w: item?.w || item?.word || "",
+      def: item?.def || item?.zh || "",
+      vs: item?.vs || "",
+      use: item?.use || ""
+    };
+  }).filter((item) => item.w);
+}
+
+function renderSynPanel(info, main) {
   return `
     <div class="syn-panel-head">
-      <span class="sp-word">${escapeHtml(syn)}</span>
+      <span class="sp-word">${escapeHtml(info.w)}</span>
       <span class="sp-vs">related to ${escapeHtml(main)}</span>
     </div>
-    <div class="sp-row"><span class="sp-label">提示</span><span class="sp-val">点击词条可发音；D1 中可继续补充更细的同义词辨析。</span></div>
+    <div class="sp-row"><span class="sp-label">释义</span><span class="sp-val">${escapeHtml(info.def || "可补充释义")}</span></div>
+    <div class="sp-row"><span class="sp-label">区别</span><span class="sp-val">${escapeHtml(info.vs || "可补充和主词的区别")}</span></div>
+    <div class="sp-row"><span class="sp-label">场景</span><span class="sp-val">${escapeHtml(info.use || "可补充典型使用场景")}</span></div>
   `;
 }
 
@@ -241,6 +304,14 @@ document.addEventListener("click", (event) => {
     toggle.classList.add("active");
     state.audioSource = toggle.dataset.src;
     stopSpeaking();
+    return;
+  }
+
+  const themeToggle = event.target.closest("#themeToggle");
+  if (themeToggle) {
+    state.theme = state.theme === "dark" ? "light" : "dark";
+    localStorage.setItem("ogden-theme", state.theme);
+    renderTheme();
     return;
   }
 
@@ -267,7 +338,12 @@ document.addEventListener("click", (event) => {
     } else {
       synButton.classList.add("active");
       panel.hidden = false;
-      panel.innerHTML = renderSynPanel(synButton.dataset.syn, synButton.dataset.main);
+      panel.innerHTML = renderSynPanel({
+        w: synButton.dataset.syn,
+        def: synButton.dataset.def,
+        vs: synButton.dataset.vs,
+        use: synButton.dataset.use
+      }, synButton.dataset.main);
       speak(synButton.dataset.syn, 0.85, null);
     }
   }
@@ -306,7 +382,11 @@ if ("speechSynthesis" in window) {
   };
 }
 
+renderTheme();
 renderPills();
-Promise.all([loadWords(), loadProgress()]).then(renderSections).catch((error) => {
+Promise.all([loadMeta(), loadWords(), loadProgress()]).then(() => {
+  renderRules();
+  renderSections();
+}).catch((error) => {
   els.status.textContent = `加载失败：${error.message}`;
 });

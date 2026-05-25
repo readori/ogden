@@ -12,6 +12,12 @@
 
 本项目是基于公开可见页面行为重写的 Cloudflare 版本；Ogden 850 基础词表为内置数据，D1 中的释义/例句可继续替换成你自己拥有授权的数据。
 
+## 资料依据
+
+- C.K. Ogden, *Basic English: A General Introduction with Rules and Grammar*, London: Paul Treber, 1930。
+- Max Planck Institute publication record confirms the title, author, publication type, year, and public PDF record.
+- Ogden Basic English grammar summaries were used to structure the in-app rules panel: 850 roots, 18 operators, plural rules, limited derivation, adverbs, comparison, negatives, questions, compounds, and technical-term explanation.
+
 ## 目录结构
 
 ```txt

@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
-import { CATEGORIES, buildFallbackWords } from "../src/catalog.js";
+import { BASIC_RULES, BOOK_INFO, CATEGORIES, buildFallbackWords } from "../src/catalog.js";
 
 const port = Number(process.env.PORT || 8787);
 const root = join(process.cwd(), "public");
@@ -41,7 +41,12 @@ createServer(async (req, res) => {
   }
 
   if (url.pathname === "/api/meta") {
-    json(res, { name: "Ogden Basic English 850", categories: CATEGORIES, total: 850 });
+    json(res, { name: "Ogden Basic English 850", book: BOOK_INFO, categories: CATEGORIES, rules: BASIC_RULES, total: 850 });
+    return;
+  }
+
+  if (url.pathname === "/api/rules") {
+    json(res, { book: BOOK_INFO, rules: BASIC_RULES });
     return;
   }
 

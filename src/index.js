@@ -1,4 +1,4 @@
-import { CATEGORIES, buildFallbackWords } from "./catalog.js";
+import { BASIC_RULES, BOOK_INFO, CATEGORIES, buildFallbackWords } from "./catalog.js";
 
 const FALLBACK_WORDS = buildFallbackWords();
 const JSON_HEADERS = {
@@ -21,19 +21,25 @@ export default {
     }
 
     if (url.pathname === "/api/meta") {
-      return withCache(env, ctx, "meta:v1", 3600, async () => ({
+      return withCache(env, ctx, "meta:v2", 3600, async () => ({
         name: "Ogden Basic English 850",
         description: "A bilingual Basic English 850-word learning handbook.",
+        book: BOOK_INFO,
         categories: CATEGORIES,
+        rules: BASIC_RULES,
         total: 850
       }));
+    }
+
+    if (url.pathname === "/api/rules") {
+      return json({ book: BOOK_INFO, rules: BASIC_RULES });
     }
 
     if (url.pathname === "/api/words") {
       const cat = normalizeCategory(url.searchParams.get("cat"));
       const q = (url.searchParams.get("q") || "").trim().toLowerCase();
       const limit = clampInteger(url.searchParams.get("limit"), 1, 1000, 1000);
-      const cacheKey = `words:v2:${cat || "all"}:${q || "_"}:${limit}`;
+      const cacheKey = `words:v3:${cat || "all"}:${q || "_"}:${limit}`;
       return withCache(env, ctx, cacheKey, 600, async () => ({
         words: await listWords(env, { cat, q, limit }),
         source: env.DB ? "d1" : "fallback"
@@ -116,7 +122,7 @@ function fromD1Row(row) {
     en: row.en,
     ex: row.example_en,
     exz: row.example_zh,
-    s: parseJsonArray(row.synonyms)
+    s: normalizeSynonyms(row.word, parseJsonArray(row.synonyms))
   };
 }
 
@@ -128,7 +134,9 @@ function matchesQuery(item, q) {
     item.en,
     item.ex,
     item.exz,
-    ...(item.s || [])
+    ...(item.s || []).flatMap((synonym) => typeof synonym === "string"
+      ? [synonym]
+      : [synonym.w, synonym.def, synonym.vs, synonym.use])
   ].join(" ").toLowerCase().includes(q);
 }
 
@@ -206,6 +214,25 @@ function parseJsonArray(value) {
   } catch {
     return [];
   }
+}
+
+function normalizeSynonyms(main, synonyms) {
+  return synonyms.map((item) => {
+    if (typeof item === "string") {
+      return {
+        w: item,
+        def: `${item}: related extension word`,
+        vs: `Compare ${item} with ${main} to see the difference in use.`,
+        use: `Use ${item} in a short sentence near ${main}.`
+      };
+    }
+    return {
+      w: String(item?.w || item?.word || ""),
+      def: String(item?.def || item?.zh || ""),
+      vs: String(item?.vs || ""),
+      use: String(item?.use || "")
+    };
+  }).filter((item) => item.w);
 }
 
 function getUid(request) {
