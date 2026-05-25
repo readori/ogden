@@ -25,7 +25,9 @@ ogden-cloudflare-worker/
 ├─ migrations/
 │  ├─ 0001_schema.sql
 │  ├─ 0002_seed_reset.sql
-│  └─ 0003_seed_words_*.sql
+│  ├─ 0003_seed_words_001.sql ... 043.sql
+│  ├─ 0004_refresh_reset.sql
+│  └─ 0005_refresh_words_*.sql
 ├─ public/
 │  ├─ index.html
 │  ├─ styles.css
@@ -134,4 +136,4 @@ npx wrangler d1 list
 npm run build:seed
 ```
 
-然后重新执行对应的 D1 migration 命令即可。seed 会拆分成多个小 migration 文件，避免 Cloudflare D1 远程执行时触发 `SQLITE_TOOBIG`。
+然后重新执行对应的 D1 migration 命令即可。历史 `0003_seed_words_001.sql` 到 `043.sql` 会保留，新的数据刷新走 `0004_refresh_reset.sql` 和 `0005_refresh_words_*.sql`，避免远程库因已应用过旧 seed 而产生主键冲突。

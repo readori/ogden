@@ -5,6 +5,7 @@ import { CATEGORIES, buildFallbackWords } from "../src/catalog.js";
 const migrationsDir = resolve("migrations");
 const words = buildFallbackWords();
 const WORD_INSERT_CHUNK_SIZE = 5;
+const LEGACY_SEED_FILE_COUNT = 43;
 
 function sql(value) {
   return `'${String(value ?? "").replaceAll("'", "''")}'`;
@@ -23,13 +24,17 @@ function wordTuple(word) {
 }
 
 function migrationName(index) {
+  return `0005_refresh_words_${String(index + 1).padStart(3, "0")}.sql`;
+}
+
+function legacyMigrationName(index) {
   return `0003_seed_words_${String(index + 1).padStart(3, "0")}.sql`;
 }
 
 await mkdir(migrationsDir, { recursive: true });
 
 for (const file of await readdir(migrationsDir)) {
-  if (/^0002_seed.*\.sql$/.test(file) || /^0003_seed_words_\d+\.sql$/.test(file)) {
+  if (/^0003_seed_words_(04[4-9]|0[5-9]\d|1\d\d)\.sql$/.test(file) || /^0004_refresh.*\.sql$/.test(file) || /^0005_refresh_words_\d+\.sql$/.test(file)) {
     await rm(resolve(migrationsDir, file));
   }
 }
@@ -43,9 +48,18 @@ const resetLines = [
   ""
 ];
 
-await writeFile(resolve(migrationsDir, "0002_seed_reset.sql"), resetLines.join("\n"), "utf8");
+await writeFile(resolve(migrationsDir, "0004_refresh_reset.sql"), resetLines.join("\n"), "utf8");
 
 const groups = chunks(words, WORD_INSERT_CHUNK_SIZE);
+await Promise.all(groups.slice(0, LEGACY_SEED_FILE_COUNT).map((group, index) => {
+  const lines = [
+    "INSERT INTO words (word, category_id, position, tag, zh, en, example_en, example_zh, synonyms) VALUES",
+    group.map(wordTuple).join(",\n") + ";",
+    ""
+  ];
+  return writeFile(resolve(migrationsDir, legacyMigrationName(index)), lines.join("\n"), "utf8");
+}));
+
 await Promise.all(groups.map((group, index) => {
   const lines = [
     "INSERT INTO words (word, category_id, position, tag, zh, en, example_en, example_zh, synonyms) VALUES",
