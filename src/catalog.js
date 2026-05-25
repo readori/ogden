@@ -6,6 +6,8 @@ export const CATEGORIES = [
   { id: "qo", label: "Qualities — Opposites", zh: "对立性质 · 反义形容词", count: 50, tag: "OPP" }
 ];
 
+export const APP_VERSION = "20260525-reader2";
+
 export const BOOK_INFO = {
   title: "Basic English: A General Introduction with Rules and Grammar",
   author: "C. K. Ogden",

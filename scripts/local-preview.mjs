@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
-import { BASIC_RULES, BOOK_INFO, CATEGORIES, buildFallbackWords } from "../src/catalog.js";
+import { APP_VERSION, BASIC_RULES, BOOK_INFO, CATEGORIES, buildFallbackWords } from "../src/catalog.js";
 
 const port = Number(process.env.PORT || 8787);
 const root = join(process.cwd(), "public");
@@ -36,12 +36,12 @@ createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://localhost:${port}`);
 
   if (url.pathname === "/api/health") {
-    json(res, { ok: true, service: "ogden-local-preview", d1: false, kv: false });
+    json(res, { ok: true, service: "ogden-local-preview", version: APP_VERSION, d1: false, kv: false });
     return;
   }
 
   if (url.pathname === "/api/meta") {
-    json(res, { name: "Ogden Basic English 850", book: BOOK_INFO, categories: CATEGORIES, rules: BASIC_RULES, total: 850 });
+    json(res, { name: "Ogden Basic English 850", version: APP_VERSION, book: BOOK_INFO, categories: CATEGORIES, rules: BASIC_RULES, total: 850 });
     return;
   }
 

@@ -1,4 +1,4 @@
-import { BASIC_RULES, BOOK_INFO, CATEGORIES, buildFallbackWords } from "./catalog.js";
+import { APP_VERSION, BASIC_RULES, BOOK_INFO, CATEGORIES, buildFallbackWords } from "./catalog.js";
 
 const FALLBACK_WORDS = buildFallbackWords();
 const JSON_HEADERS = {
@@ -14,6 +14,7 @@ export default {
       return json({
         ok: true,
         service: "ogden-basic-english",
+        version: APP_VERSION,
         d1: Boolean(env.DB),
         kv: Boolean(env.KV),
         time: new Date().toISOString()
@@ -21,8 +22,9 @@ export default {
     }
 
     if (url.pathname === "/api/meta") {
-      return withCache(env, ctx, "meta:v2", 3600, async () => ({
+      return withCache(env, ctx, "meta:v3", 3600, async () => ({
         name: "Ogden Basic English 850",
+        version: APP_VERSION,
         description: "A bilingual Basic English 850-word learning handbook.",
         book: BOOK_INFO,
         categories: CATEGORIES,
@@ -39,7 +41,7 @@ export default {
       const cat = normalizeCategory(url.searchParams.get("cat"));
       const q = (url.searchParams.get("q") || "").trim().toLowerCase();
       const limit = clampInteger(url.searchParams.get("limit"), 1, 1000, 1000);
-      const cacheKey = `words:v3:${cat || "all"}:${q || "_"}:${limit}`;
+      const cacheKey = `words:v4:${cat || "all"}:${q || "_"}:${limit}`;
       return withCache(env, ctx, cacheKey, 600, async () => ({
         words: await listWords(env, { cat, q, limit }),
         source: env.DB ? "d1" : "fallback"
