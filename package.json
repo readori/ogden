@@ -1,0 +1,26 @@
+{
+  "name": "ogden-basic-english-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "preview:local": "node scripts/local-preview.mjs",
+    "deploy": "wrangler deploy",
+    "build:seed": "node scripts/build-seed-sql.mjs",
+    "d1:migrate:local": "wrangler d1 migrations apply ogden_basic_english --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply ogden_basic_english --remote",
+    "d1:seed:local": "wrangler d1 migrations apply ogden_basic_english --local",
+    "d1:seed:remote": "wrangler d1 migrations apply ogden_basic_english --remote",
+    "verify:data": "node scripts/verify-data.mjs",
+    "check": "node --check src/index.js && node --check public/app.js && node --check scripts/build-seed-sql.mjs && node --check scripts/local-preview.mjs && node --check scripts/verify-data.mjs && node --check scripts/prepare-wrangler-ci.mjs && node scripts/verify-data.mjs && node scripts/build-seed-sql.mjs",
+    "ci:prepare-cloudflare": "node scripts/prepare-wrangler-ci.mjs",
+    "deploy:dry-run": "wrangler deploy --dry-run"
+  },
+  "devDependencies": {
+    "wrangler": "latest"
+  }
+}

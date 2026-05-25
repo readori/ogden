@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run checks
+        run: npm run check
+
+      - name: Verify generated seed is committed
+        run: git diff --exit-code -- migrations/
+
+      - name: Package artifact
+        run: zip -r ogden-cloudflare-worker.zip . -x "node_modules/*" ".git/*" ".codex_tmp/*"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ogden-cloudflare-worker
+          path: ogden-cloudflare-worker.zip
+          if-no-files-found: error
