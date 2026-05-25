@@ -1,9 +1,10 @@
 import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { CATEGORIES, buildFallbackWords } from "../src/catalog.js";
+import { CATEGORIES } from "../src/catalog.js";
+import { loadWords } from "./word-source.mjs";
 
 const migrationsDir = resolve("migrations");
-const words = buildFallbackWords();
+const { source, words } = await loadWords();
 const WORD_INSERT_CHUNK_SIZE = 5;
 const LEGACY_SEED_FILE_COUNT = 43;
 
@@ -69,4 +70,4 @@ await Promise.all(groups.map((group, index) => {
   return writeFile(resolve(migrationsDir, migrationName(index)), lines.join("\n"), "utf8");
 }));
 
-console.log(`Wrote seed migrations with ${words.length} words in ${groups.length} word files.`);
+console.log(`Wrote seed migrations from ${source} with ${words.length} words in ${groups.length} word files.`);

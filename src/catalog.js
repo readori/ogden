@@ -1,3 +1,5 @@
+import { PUBLIC_ENRICHMENT } from "./enrichment.js";
+
 export const CATEGORIES = [
   { id: "op", label: "Operations", zh: "操作词 · 动词、介词、代词、连词等", count: 100, tag: "OP" },
   { id: "gt", label: "General Things", zh: "一般事物 · 抽象名词", count: 400, tag: "GT" },
@@ -210,15 +212,16 @@ export function buildFallbackWords() {
       ].filter(Boolean);
       const hint = CATEGORY_HINTS[categoryId];
       const example = exampleFor(categoryId, word);
+      const enrichment = PUBLIC_ENRICHMENT[word] || {};
       return {
         w: word,
         c: categoryId,
         position: index + 1,
         tag: category?.tag || categoryId.toUpperCase(),
-        zh: hint.zh,
-        en: hint.en,
-        ex: example.ex || hint.ex(word),
-        exz: example.exz || hint.exz(word),
+        zh: enrichment.zh || hint.zh,
+        en: enrichment.en || hint.en,
+        ex: enrichment.ex || example.ex || hint.ex(word),
+        exz: enrichment.exz || example.exz || hint.exz(word),
         s: relatedDetails(categoryId, word, related)
       };
     });

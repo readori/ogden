@@ -1,8 +1,11 @@
-import { CATEGORIES, buildFallbackWords } from "../src/catalog.js";
+import { CATEGORIES } from "../src/catalog.js";
+import { PUBLIC_ENRICHMENT } from "../src/enrichment.js";
+import { loadWords } from "./word-source.mjs";
 
-const words = buildFallbackWords();
+const { source, words } = await loadWords();
 const expectedTotal = CATEGORIES.reduce((sum, category) => sum + category.count, 0);
 const errors = [];
+const enrichedWords = new Set(Object.keys(PUBLIC_ENRICHMENT));
 
 if (words.length !== expectedTotal) {
   errors.push(`Expected ${expectedTotal} words, got ${words.length}.`);
@@ -44,4 +47,6 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`Verified ${words.length} words across ${CATEGORIES.length} categories.`);
+const enrichedCount = words.filter((word) => enrichedWords.has(word.w)).length;
+console.log(`Verified ${words.length} words across ${CATEGORIES.length} categories from ${source}.`);
+console.log(`Public original enrichment coverage: ${enrichedCount}/${words.length} words.`);

@@ -137,3 +137,15 @@ npm run build:seed
 ```
 
 然后重新执行对应的 D1 migration 命令即可。历史 `0003_seed_words_001.sql` 到 `043.sql` 会保留，新的数据刷新走 `0004_refresh_reset.sql` 和 `0005_refresh_words_*.sql`，避免远程库因已应用过旧 seed 而产生主键冲突。
+
+## 授权数据导入
+
+如果你拥有目标站内容或已经取得授权，可以把完整 850 词数据保存为 `data/authorized-words.json`，或通过环境变量指定路径：
+
+```bash
+OGDEN_AUTHORIZED_DATA=path/to/authorized-words.json npm run build:seed
+```
+
+导入格式兼容 `{ w, c, zh, en, ex, exz, s }` 词条数组，也兼容 `{ words, synsDetail }` 结构。`s` 可以是扩展词对象数组，也可以是字符串数组并通过 `synsDetail` 提供 `def/vs/use`。
+
+未提供授权数据时，脚本会继续使用项目内置的原创 fallback 数据。
