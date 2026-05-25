@@ -1,4 +1,13 @@
+import { GENERAL_ENRICHMENT } from "./enrichment-general.js";
+import { PICTURABLE_ENRICHMENT } from "./enrichment-picturable.js";
+import { QUALITIES_ENRICHMENT } from "./enrichment-qualities.js";
+import { OPPOSITE_QUALITIES_ENRICHMENT } from "./enrichment-opposite-qualities.js";
+
 export const PUBLIC_ENRICHMENT = {
+  ...GENERAL_ENRICHMENT,
+  ...PICTURABLE_ENRICHMENT,
+  ...QUALITIES_ENRICHMENT,
+  ...OPPOSITE_QUALITIES_ENRICHMENT,
   come: { zh: "来；到来；走近说话者或目标", en: "move toward the speaker or toward a named place", ex: "Come to the table before the food is cold.", exz: "饭菜变凉前到桌边来。" },
   get: { zh: "得到；获得；变得；去取", en: "receive, obtain, become, or fetch something", ex: "I will get some water for the child.", exz: "我会给这个孩子取一些水。" },
   give: { zh: "给；交给；提供", en: "put something in another person's possession or care", ex: "Give the note to your mother after class.", exz: "下课后把这张便条给你母亲。" },
